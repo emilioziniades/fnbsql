@@ -1,15 +1,13 @@
 [project]
 name = "fnbsql"
 version = "0.1.0"
-description = "Add your description here"
+description = "Extract transactions from an FNB account statement and store it in a sqlite database"
 readme = "README.md"
 authors = [
-    { name = "Emilio (Racecar) Ziniades", email = "emilioziniades@protonmail.com" }
+  { name = "Emilio Ziniades", email = "emilioziniades@protonmail.com" },
 ]
 requires-python = ">=3.14"
-dependencies = [
-    "pdfplumber>=0.11.10",
-]
+dependencies = ["pdfplumber>=0.11.10"]
 
 [project.scripts]
 fnbsql = "fnbsql:main"

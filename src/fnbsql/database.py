@@ -1,6 +1,7 @@
 import logging
 import sqlite3
-from dataclasses import astuple, dataclass
+from dataclasses import dataclass
+from datetime import date as Date
 from pathlib import Path
 from types import TracebackType
 from typing import Self
@@ -10,8 +11,8 @@ LOGGER = logging.getLogger(__name__)
 
 @dataclass(frozen=True, slots=True)
 class Transaction:
-    date: str
-    amount: float
+    date: Date
+    amount: int
     description: str
     debit: bool
     account_number: str
@@ -23,21 +24,18 @@ class Database:
         self._setup()
 
     def _setup(self) -> None:
-        self._connection.execute(
+        self._connection.executescript(
             """
             CREATE TABLE IF NOT EXISTS transactions (
                 date TEXT NOT NULL,
-                amount REAL NOT NULL,
+                amount INTEGER NOT NULL,
                 description TEXT NOT NULL,
                 debit INTEGER NOT NULL CHECK (debit IN (0, 1)),
                 account_number TEXT NOT NULL
-            )
-            """
-        )
-        self._connection.execute(
-            """
+            );
+
             CREATE UNIQUE INDEX IF NOT EXISTS transactions_unique
-            ON transactions (date, amount, description, debit, account_number)
+            ON transactions (date, amount, description, debit, account_number);
             """
         )
 
@@ -50,7 +48,13 @@ class Database:
                 "INSERT INTO transactions "
                 "(date, amount, description, debit, account_number) "
                 "VALUES (?, ?, ?, ?, ?)",
-                astuple(transaction),
+                (
+                    transaction.date.isoformat(),
+                    transaction.amount,
+                    transaction.description,
+                    transaction.debit,
+                    transaction.account_number,
+                ),
             )
         except sqlite3.IntegrityError:
             LOGGER.warning("Duplicate transaction was not inserted: %s", transaction)

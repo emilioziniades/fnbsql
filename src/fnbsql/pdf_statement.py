@@ -9,7 +9,7 @@ from pathlib import Path
 import pdfplumber
 from pdfplumber.pdf import PDF
 
-from fnbsql.database import Transaction
+from fnbsql.database import Statement, Transaction
 
 LOGGER = logging.getLogger(__name__)
 STATEMENT_PERIOD_RE = re.compile(
@@ -46,6 +46,14 @@ class PdfStatement:
             )
             self.transactions = list(self._extract_transactions(pdf))
             self._validate()
+            self.statement = Statement(
+                account_number=self.account_number,
+                period_start=self.period_start,
+                period_end=self.period_end,
+                opening_balance=self.opening_balance,
+                closing_balance=self.closing_balance,
+                transactions=tuple(self.transactions),
+            )
 
     @staticmethod
     def _extract_statement_period(page_text: str) -> tuple[Date, Date]:
@@ -71,7 +79,6 @@ class PdfStatement:
         row: TableRow,
         period_start: Date,
         period_end: Date,
-        account_number: str,
     ) -> Transaction | None:
         if len(row) < 4:
             return None
@@ -109,7 +116,6 @@ class PdfStatement:
             amount,
             (row[1] or "").strip(),
             debit,
-            account_number,
         )
 
     def _extract_transactions(self, pdf: PDF) -> Iterator[Transaction]:
@@ -129,7 +135,6 @@ class PdfStatement:
                         row,
                         self.period_start,
                         self.period_end,
-                        self.account_number,
                     )
                     if transaction is not None:
                         yield transaction

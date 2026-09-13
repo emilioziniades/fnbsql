@@ -15,7 +15,16 @@ class Transaction:
     amount: int
     description: str
     debit: bool
+
+
+@dataclass(frozen=True, slots=True)
+class Statement:
     account_number: str
+    period_start: Date
+    period_end: Date
+    opening_balance: int
+    closing_balance: int
+    transactions: tuple[Transaction, ...]
 
 
 class Database:
@@ -26,38 +35,82 @@ class Database:
     def _setup(self) -> None:
         self._connection.executescript(
             """
+            PRAGMA foreign_keys = ON;
+
+            CREATE TABLE IF NOT EXISTS statements (
+                id INTEGER PRIMARY KEY,
+                account_number TEXT NOT NULL,
+                period_start TEXT NOT NULL,
+                period_end TEXT NOT NULL,
+                opening_balance INTEGER NOT NULL,
+                closing_balance INTEGER NOT NULL
+            );
+
+            CREATE UNIQUE INDEX IF NOT EXISTS statements_unique
+            ON statements (account_number, period_start, period_end);
+
             CREATE TABLE IF NOT EXISTS transactions (
+                statement_id INTEGER NOT NULL REFERENCES statements(id),
+                position INTEGER NOT NULL,
                 date TEXT NOT NULL,
                 amount INTEGER NOT NULL,
                 description TEXT NOT NULL,
                 debit INTEGER NOT NULL CHECK (debit IN (0, 1)),
-                account_number TEXT NOT NULL
+                PRIMARY KEY (statement_id, position)
             );
-
-            CREATE UNIQUE INDEX IF NOT EXISTS transactions_unique
-            ON transactions (date, amount, description, debit, account_number);
             """
         )
 
-    def insert(self, transaction: Transaction) -> None:
-        if not isinstance(transaction, Transaction):
-            raise TypeError("Database.insert() requires a Transaction")
-
+    def insert(self, statement: Statement) -> None:
+        if not isinstance(statement, Statement):
+            raise TypeError("Database.insert() requires a Statement")
         try:
-            self._connection.execute(
-                "INSERT INTO transactions "
-                "(date, amount, description, debit, account_number) "
-                "VALUES (?, ?, ?, ?, ?)",
+            cursor = self._connection.execute(
+                "INSERT INTO statements "
+                "(account_number, period_start, period_end, opening_balance, "
+                "closing_balance) VALUES (?, ?, ?, ?, ?) RETURNING id",
                 (
-                    transaction.date.isoformat(),
-                    transaction.amount,
-                    transaction.description,
-                    transaction.debit,
-                    transaction.account_number,
+                    statement.account_number,
+                    statement.period_start.isoformat(),
+                    statement.period_end.isoformat(),
+                    statement.opening_balance,
+                    statement.closing_balance,
                 ),
             )
         except sqlite3.IntegrityError:
-            LOGGER.warning("Duplicate transaction was not inserted: %s", transaction)
+            LOGGER.warning(
+                "Duplicate statement was not inserted: account %s, period %s to %s",
+                statement.account_number,
+                statement.period_start,
+                statement.period_end,
+            )
+            return
+
+        returned_row = cursor.fetchone()
+        if returned_row is None:
+            raise RuntimeError("SQLite did not return the inserted statement ID")
+        statement_id = returned_row[0]
+        for position, transaction in enumerate(statement.transactions):
+            self._insert_transaction(statement_id, position, transaction)
+
+    def _insert_transaction(
+        self, statement_id: int, position: int, transaction: Transaction
+    ) -> None:
+        if not isinstance(transaction, Transaction):
+            raise TypeError("Database transactions must be Transaction instances")
+        self._connection.execute(
+            "INSERT INTO transactions "
+            "(statement_id, position, date, amount, description, debit) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                statement_id,
+                position,
+                transaction.date.isoformat(),
+                transaction.amount,
+                transaction.description,
+                transaction.debit,
+            ),
+        )
 
     def __enter__(self) -> Self:
         return self

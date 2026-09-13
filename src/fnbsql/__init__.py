@@ -18,5 +18,4 @@ def main() -> None:
     with Database(args.database) as database:
         for file in args.file:
             statement = PdfStatement(file)
-            for transaction in statement.transactions:
-                database.insert(transaction)
+            database.insert(statement.statement)

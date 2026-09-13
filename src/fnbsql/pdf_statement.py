@@ -1,16 +1,15 @@
+import logging
+import re
 from collections.abc import Iterator
 from datetime import date, datetime
 from decimal import Decimal
-import logging
 from pathlib import Path
-import re
 
 import pdfplumber
 from pdfplumber.page import Page
 from pdfplumber.pdf import PDF
 
 from fnbsql.database import Transaction
-
 
 LOGGER = logging.getLogger(__name__)
 STATEMENT_PERIOD_RE = re.compile(

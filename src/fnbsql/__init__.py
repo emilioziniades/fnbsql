@@ -1,10 +1,9 @@
-from argparse import ArgumentParser
 import logging
+from argparse import ArgumentParser
 from pathlib import Path
 
 from fnbsql.database import Database
 from fnbsql.pdf_statement import PdfStatement
-
 
 DEFAULT_DATABASE = Path(__file__).resolve().parents[2] / "fnbsql.sqlite"
 

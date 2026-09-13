@@ -1,10 +1,9 @@
-from dataclasses import astuple, dataclass
 import logging
-from pathlib import Path
 import sqlite3
+from dataclasses import astuple, dataclass
+from pathlib import Path
 from types import TracebackType
 from typing import Self
-
 
 LOGGER = logging.getLogger(__name__)
 

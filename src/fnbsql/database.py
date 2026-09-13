@@ -1,7 +1,7 @@
 import logging
 import sqlite3
 from dataclasses import dataclass
-from datetime import date as Date
+from datetime import date
 from pathlib import Path
 from types import TracebackType
 from typing import Self
@@ -11,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 @dataclass(frozen=True, slots=True)
 class Transaction:
-    date: Date
+    date: date
     amount: int
     description: str
     debit: bool
@@ -20,8 +20,8 @@ class Transaction:
 @dataclass(frozen=True, slots=True)
 class Statement:
     account_number: str
-    period_start: Date
-    period_end: Date
+    period_start: date
+    period_end: date
     opening_balance: int
     closing_balance: int
     transactions: tuple[Transaction, ...]

@@ -2,7 +2,7 @@ import logging
 import re
 import time
 from collections.abc import Iterator
-from datetime import date as Date
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
@@ -24,9 +24,9 @@ CLOSING_BALANCE_RE = re.compile(r"Closing Balance\s+([\d,]+\.\d{2})(Cr|Dr)?")
 type TableRow = list[str | None]
 
 
-def parse_date(value: str, format_string: str) -> Date:
+def parse_date(value: str, format_string: str) -> date:
     parsed = time.strptime(value, format_string)
-    return Date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday)
+    return date(parsed.tm_year, parsed.tm_mon, parsed.tm_mday)
 
 
 class PdfStatement:
@@ -56,7 +56,7 @@ class PdfStatement:
             )
 
     @staticmethod
-    def _extract_statement_period(page_text: str) -> tuple[Date, Date]:
+    def _extract_statement_period(page_text: str) -> tuple[date, date]:
         match = STATEMENT_PERIOD_RE.search(page_text)
         if match is None:
             raise ValueError("Could not find the statement period on the first page")
@@ -77,8 +77,8 @@ class PdfStatement:
     @staticmethod
     def _transaction_from_row(
         row: TableRow,
-        period_start: Date,
-        period_end: Date,
+        period_start: date,
+        period_end: date,
     ) -> Transaction | None:
         if len(row) < 4:
             return None

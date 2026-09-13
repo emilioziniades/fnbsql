@@ -68,9 +68,17 @@ class Database:
             raise TypeError("Database.insert() requires a Statement")
         try:
             cursor = self._connection.execute(
-                "INSERT INTO statements "
-                "(account_number, period_start, period_end, opening_balance, "
-                "closing_balance) VALUES (?, ?, ?, ?, ?) RETURNING id",
+                """
+                INSERT INTO statements (
+                    account_number,
+                    period_start,
+                    period_end,
+                    opening_balance,
+                    closing_balance
+                )
+                VALUES (?, ?, ?, ?, ?)
+                RETURNING id
+                """,
                 (
                     statement.account_number,
                     statement.period_start.isoformat(),
@@ -101,9 +109,17 @@ class Database:
         if not isinstance(transaction, Transaction):
             raise TypeError("Database transactions must be Transaction instances")
         self._connection.execute(
-            "INSERT INTO transactions "
-            "(statement_id, position, date, amount, description, debit) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            """
+            INSERT INTO transactions (
+                statement_id,
+                position,
+                date,
+                amount,
+                description,
+                debit
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
             (
                 statement_id,
                 position,

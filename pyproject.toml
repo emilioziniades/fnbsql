@@ -7,7 +7,10 @@ authors = [
   { name = "Emilio Ziniades", email = "emilioziniades@protonmail.com" },
 ]
 requires-python = ">=3.14"
-dependencies = ["pdfplumber>=0.11.10"]
+dependencies = [
+    "pdfplumber>=0.11.10",
+    "platformdirs>=4.11.8",
+]
 
 [project.scripts]
 fnbsql = "fnbsql:main"

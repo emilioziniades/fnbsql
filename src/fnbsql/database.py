@@ -29,8 +29,10 @@ class Statement:
 
 class Database:
     def __init__(self, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
         self._connection = sqlite3.connect(path)
         self._setup()
+        LOGGER.info("Using database at %s", path.resolve())
 
     def _setup(self) -> None:
         self._connection.executescript(
